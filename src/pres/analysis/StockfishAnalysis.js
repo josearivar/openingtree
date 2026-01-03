@@ -8,9 +8,10 @@ import {
     Switch,
     FormControlLabel,
     Slider,
-    Paper
+    Paper,
+    Snackbar
 } from '@material-ui/core';
-import { PlayArrow, Stop, Settings } from '@material-ui/icons';
+import { PlayArrow, Stop, Settings, Refresh } from '@material-ui/icons';
 import { getStockfishEngine } from '../../app/StockfishEngine';
 import StockfishEngine from '../../app/StockfishEngine';
 import { chessLogic } from '../../app/chess/ChessLogic';
@@ -28,26 +29,59 @@ export default class StockfishAnalysis extends React.Component {
             showSettings: false,
             analysisDepth: 20,
             multiPV: 3,
-            error: null
+            error: null,
+            engineState: 'uninitialized',
+            showError: false,
+            errorMessage: ''
         };
         this.engine = null;
         this.analysisResults = new Map(); // Store results by multipv
+        this.lastFen = null; // Track last analyzed FEN
+        this.mounted = false;
+        
+        // Bind methods
+        this.startAnalysis = this.startAnalysis.bind(this);
+        this.stopAnalysis = this.stopAnalysis.bind(this);
+        this.toggleAnalysis = this.toggleAnalysis.bind(this);
+        this.handleAnalysisUpdate = this.handleAnalysisUpdate.bind(this);
+        this.handleDepthChange = this.handleDepthChange.bind(this);
+        this.handleMultiPVChange = this.handleMultiPVChange.bind(this);
+        this.toggleSettings = this.toggleSettings.bind(this);
+        this.handleMoveClick = this.handleMoveClick.bind(this);
+        this.handleMoveHover = this.handleMoveHover.bind(this);
+        this.handleMoveLeave = this.handleMoveLeave.bind(this);
+        this.handleCloseError = this.handleCloseError.bind(this);
+        this.retryInit = this.retryInit.bind(this);
     }
 
     componentDidMount() {
+        this.mounted = true;
         this.initEngine();
     }
 
     componentDidUpdate(prevProps) {
-        // Re-analyze when FEN changes
+        // Re-analyze when FEN changes and we're analyzing
         if (prevProps.fen !== this.props.fen && this.state.isAnalyzing) {
+            // Clear previous results when position changes
+            this.analysisResults.clear();
+            this.setState({ 
+                topMoves: [],
+                depth: 0 
+            });
             this.startAnalysis();
         }
     }
 
     componentWillUnmount() {
+        this.mounted = false;
         if (this.engine) {
             this.engine.stop();
+        }
+    }
+
+    safeSetState(state, callback) {
+        if (this.mounted) {
+            this.setState(state, callback);
         }
     }
 
@@ -55,38 +89,78 @@ export default class StockfishAnalysis extends React.Component {
         try {
             this.engine = getStockfishEngine();
             await this.engine.init();
-            this.setState({ isEngineReady: true });
+            if (this.mounted) {
+                this.setState({ 
+                    isEngineReady: true,
+                    engineState: this.engine.getState()
+                });
+            }
         } catch (error) {
             console.error('Failed to initialize Stockfish:', error);
-            this.setState({ error: 'Failed to load Stockfish engine' });
+            if (this.mounted) {
+                this.setState({ 
+                    error: 'Failed to load Stockfish engine. Click refresh to retry.',
+                    showError: true,
+                    errorMessage: 'Engine initialization failed'
+                });
+            }
         }
     }
 
-    startAnalysis = () => {
+    async retryInit() {
+        this.setState({ 
+            error: null, 
+            isEngineReady: false,
+            showError: false 
+        });
+        await this.initEngine();
+    }
+
+    startAnalysis() {
         if (!this.engine || !this.state.isEngineReady) {
+            this.setState({
+                showError: true,
+                errorMessage: 'Engine not ready. Please wait or refresh.'
+            });
             return;
         }
 
+        // Check if engine is in a valid state
+        const engineState = this.engine.getState();
+        if (engineState === 'error') {
+            this.setState({
+                showError: true,
+                errorMessage: 'Engine error. Attempting recovery...'
+            });
+            this.retryInit();
+            return;
+        }
+
+        this.lastFen = this.props.fen;
         this.analysisResults.clear();
-        this.setState({ 
+        this.safeSetState({ 
             isAnalyzing: true, 
             topMoves: [],
             evaluation: null,
-            depth: 0 
+            depth: 0,
+            engineState: 'analyzing'
         });
 
         this.engine.setMultiPV(this.state.multiPV);
         this.engine.analyzeInfinite(this.props.fen, this.handleAnalysisUpdate);
     }
 
-    stopAnalysis = () => {
+    stopAnalysis() {
         if (this.engine) {
             this.engine.stop();
         }
-        this.setState({ isAnalyzing: false });
+        this.safeSetState({ 
+            isAnalyzing: false,
+            engineState: this.engine ? this.engine.getState() : 'ready'
+        });
     }
 
-    toggleAnalysis = () => {
+    toggleAnalysis() {
         if (this.state.isAnalyzing) {
             this.stopAnalysis();
         } else {
@@ -94,12 +168,24 @@ export default class StockfishAnalysis extends React.Component {
         }
     }
 
-    handleAnalysisUpdate = (result) => {
+    handleAnalysisUpdate(result) {
+        // Ignore results if component is unmounted or FEN has changed
+        if (!this.mounted || this.props.fen !== this.lastFen) {
+            return;
+        }
+
         // Store result by multipv index
         this.analysisResults.set(result.multipv, result);
 
         // Get current turn from FEN
-        const chess = chessLogic(this.props.variant, this.props.fen);
+        let chess;
+        try {
+            chess = chessLogic(this.props.variant, this.props.fen);
+        } catch (e) {
+            console.error('Error creating chess instance:', e);
+            return;
+        }
+        
         const turn = chess.turn();
 
         // Convert all stored results to display format
@@ -132,10 +218,11 @@ export default class StockfishAnalysis extends React.Component {
             };
         }
 
-        this.setState({
+        this.safeSetState({
             topMoves: topMoves,
             evaluation: evaluation,
-            depth: bestResult ? bestResult.depth : 0
+            depth: bestResult ? bestResult.depth : 0,
+            engineState: this.engine ? this.engine.getState() : 'unknown'
         });
 
         // Notify parent about top moves for arrow display
@@ -144,33 +231,34 @@ export default class StockfishAnalysis extends React.Component {
         }
     }
 
-    handleDepthChange = (event, newValue) => {
+    handleDepthChange(event, newValue) {
         this.setState({ analysisDepth: newValue });
         if (this.engine) {
             this.engine.setDepth(newValue);
         }
     }
 
-    handleMultiPVChange = (event, newValue) => {
+    handleMultiPVChange(event, newValue) {
         this.setState({ multiPV: newValue }, () => {
             if (this.state.isAnalyzing) {
-                // Restart analysis with new multiPV
+                // Clear results and restart analysis with new multiPV
+                this.analysisResults.clear();
                 this.startAnalysis();
             }
         });
     }
 
-    toggleSettings = () => {
+    toggleSettings() {
         this.setState({ showSettings: !this.state.showSettings });
     }
 
-    handleMoveClick = (move) => {
+    handleMoveClick(move) {
         if (this.props.onMove && move.move) {
             this.props.onMove(move.move.from, move.move.to);
         }
     }
 
-    handleMoveHover = (move) => {
+    handleMoveHover(move) {
         if (this.props.highlightArrow && move.move) {
             this.props.highlightArrow({
                 orig: move.move.from,
@@ -180,10 +268,14 @@ export default class StockfishAnalysis extends React.Component {
         }
     }
 
-    handleMoveLeave = () => {
+    handleMoveLeave() {
         if (this.props.highlightArrow) {
             this.props.highlightArrow(null);
         }
+    }
+
+    handleCloseError() {
+        this.setState({ showError: false });
     }
 
     renderEvalBar() {
@@ -210,12 +302,16 @@ export default class StockfishAnalysis extends React.Component {
     }
 
     renderTopMoves() {
-        const { topMoves } = this.state;
+        const { topMoves, isAnalyzing, depth } = this.state;
         
         if (topMoves.length === 0) {
             return (
                 <div className="no-analysis">
-                    {this.state.isAnalyzing ? 'Analyzing...' : 'Click play to start analysis'}
+                    {isAnalyzing ? (
+                        depth === 0 ? 'Starting analysis...' : 'Analyzing...'
+                    ) : (
+                        'Click play to start analysis'
+                    )}
                 </div>
             );
         }
@@ -224,7 +320,7 @@ export default class StockfishAnalysis extends React.Component {
             <div className="top-moves-list">
                 {topMoves.map((move, index) => (
                     <div 
-                        key={index}
+                        key={`${move.rank}-${move.pv[0]}`}
                         className={`top-move-item ${index === 0 ? 'best-move' : ''}`}
                         onClick={() => this.handleMoveClick(move)}
                         onMouseEnter={() => this.handleMoveHover(move)}
@@ -277,12 +373,21 @@ export default class StockfishAnalysis extends React.Component {
     }
 
     render() {
-        const { isEngineReady, isAnalyzing, depth, error } = this.state;
+        const { isEngineReady, isAnalyzing, depth, error, showError, errorMessage } = this.state;
 
         if (error) {
             return (
                 <div className="stockfish-analysis error">
                     <Typography color="error">{error}</Typography>
+                    <Tooltip title="Retry initialization">
+                        <IconButton 
+                            onClick={this.retryInit}
+                            color="primary"
+                            size="small"
+                        >
+                            <Refresh />
+                        </IconButton>
+                    </Tooltip>
                 </div>
             );
         }
@@ -337,6 +442,13 @@ export default class StockfishAnalysis extends React.Component {
                         <LinearProgress />
                     </div>
                 )}
+
+                <Snackbar
+                    open={showError}
+                    autoHideDuration={4000}
+                    onClose={this.handleCloseError}
+                    message={errorMessage}
+                />
             </div>
         );
     }
