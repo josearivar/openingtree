@@ -1,0 +1,261 @@
+.stockfish-analysis {
+    padding: 10px;
+    min-height: 200px;
+}
+
+.stockfish-analysis.error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.analysis-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.dark-mode .analysis-header {
+    border-bottom-color: #444;
+}
+
+.analysis-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.analysis-title h6 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.depth-indicator {
+    color: #666;
+    font-size: 0.75rem;
+}
+
+.dark-mode .depth-indicator {
+    color: #aaa;
+}
+
+.analysis-controls {
+    display: flex;
+    gap: 4px;
+}
+
+.analysis-content {
+    display: flex;
+    gap: 15px;
+}
+
+/* Evaluation Bar */
+.eval-bar-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 30px;
+    flex-shrink: 0;
+}
+
+.eval-bar {
+    width: 20px;
+    height: 150px;
+    border: 1px solid #333;
+    border-radius: 3px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column-reverse;
+    background: #333;
+}
+
+.eval-bar-white {
+    background: linear-gradient(to top, #f0f0f0, #ffffff);
+    transition: height 0.3s ease;
+}
+
+.eval-bar-black {
+    background: linear-gradient(to bottom, #333, #1a1a1a);
+    transition: height 0.3s ease;
+}
+
+.eval-score {
+    margin-top: 5px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    font-family: 'Roboto Mono', monospace;
+}
+
+/* Top Moves List */
+.analysis-moves {
+    flex: 1;
+    min-width: 0;
+}
+
+.no-analysis {
+    color: #888;
+    font-style: italic;
+    padding: 20px;
+    text-align: center;
+}
+
+.top-moves-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.top-move-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    background: #f5f5f5;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    gap: 10px;
+}
+
+.dark-mode .top-move-item {
+    background: #2a2a2a;
+}
+
+.top-move-item:hover {
+    background: #e8e8e8;
+    transform: translateX(2px);
+}
+
+.dark-mode .top-move-item:hover {
+    background: #3a3a3a;
+}
+
+.top-move-item.best-move {
+    background: #e3f2fd;
+    border-left: 3px solid #2196f3;
+}
+
+.dark-mode .top-move-item.best-move {
+    background: #1a3a5c;
+    border-left-color: #64b5f6;
+}
+
+.move-rank {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #ddd;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #555;
+}
+
+.dark-mode .move-rank {
+    background: #444;
+    color: #ccc;
+}
+
+.top-move-item.best-move .move-rank {
+    background: #2196f3;
+    color: white;
+}
+
+.dark-mode .top-move-item.best-move .move-rank {
+    background: #64b5f6;
+    color: #1a1a1a;
+}
+
+.move-san {
+    font-weight: bold;
+    font-size: 1rem;
+    min-width: 60px;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.move-score {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.9rem;
+    min-width: 55px;
+    text-align: right;
+}
+
+.move-score.score-winning {
+    color: #4caf50;
+}
+
+.move-score.score-losing {
+    color: #f44336;
+}
+
+.move-score.score-equal {
+    color: #888;
+}
+
+.move-depth {
+    font-size: 0.7rem;
+    color: #999;
+    margin-left: auto;
+}
+
+/* Settings Panel */
+.analysis-settings {
+    padding: 12px;
+    margin-bottom: 10px;
+    background: #fafafa !important;
+}
+
+.dark-mode .analysis-settings {
+    background: #2a2a2a !important;
+}
+
+.setting-item {
+    margin-top: 8px;
+}
+
+.setting-item .MuiSlider-root {
+    margin-top: 5px;
+}
+
+/* Loading State */
+.loading-engine {
+    padding: 20px;
+    text-align: center;
+}
+
+.loading-engine .MuiLinearProgress-root {
+    margin-top: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .analysis-content {
+        flex-direction: column;
+    }
+    
+    .eval-bar-container {
+        flex-direction: row;
+        width: 100%;
+        gap: 10px;
+    }
+    
+    .eval-bar {
+        width: 100%;
+        height: 20px;
+        flex-direction: row;
+    }
+    
+    .eval-bar-white {
+        height: 100%;
+        width: auto;
+    }
+    
+    .eval-bar-black {
+        height: 100%;
+        width: auto;
+    }
+}

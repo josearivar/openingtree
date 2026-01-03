@@ -16,9 +16,10 @@ import {
 } from 'reactstrap';
 import classnames from 'classnames';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faUser, faList, faCog, faChartBar, faBook } from '@fortawesome/free-solid-svg-icons'
+import { faUser, faList, faCog, faChartBar, faBook, faMicrochip } from '@fortawesome/free-solid-svg-icons'
 import MovesList from './moves/MovesList'
 import BookMoves from './moves/BookMoves'
+import StockfishAnalysis from './analysis/StockfishAnalysis'
 import {trackEvent} from '../app/Analytics'
 import * as Constants from '../app/Constants'
 import ReportControls from './ReportControls'
@@ -135,6 +136,14 @@ export default class ControlsContainer extends React.Component {
         </NavItem>
         <NavItem>
           <NavLink
+            className={classnames({ active: this.state.activeTab === 'analysis' })}
+            onClick={() => { this.toggle('analysis'); }}
+          >
+            <FontAwesomeIcon icon={faMicrochip} /> {this.state.activeTab === 'analysis'?"Analysis":""}
+          </NavLink>
+        </NavItem>
+        <NavItem>
+          <NavLink
             className={classnames({ active: this.state.activeTab === 'report' })}
             onClick={() => { this.toggle('report'); }}
           >
@@ -201,6 +210,15 @@ export default class ControlsContainer extends React.Component {
               variant={this.props.variant}
               highlightArrow={this.props.highlightArrow}
               />
+        </TabPane>
+        <TabPane tabId="analysis">
+            <StockfishAnalysis
+              fen={this.props.fen}
+              variant={this.props.variant}
+              onMove={this.props.onMove}
+              highlightArrow={this.props.highlightArrow}
+              onAnalysisUpdate={this.props.onAnalysisUpdate}
+            />
         </TabPane>
         <TabPane tabId="report">
           <ReportControls fen={this.props.fen} simplifiedView = {false}

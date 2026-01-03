@@ -63,7 +63,8 @@ export default class MainContainer extends React.Component {
         diagnosticsDataOpen:false,
         variant:selectedVariant,
         update:0,//increase count to force update the component
-        highlightedMove:null
+        highlightedMove:null,
+        analysisArrows:[] // Store analysis arrows from Stockfish
       }
     this.chessboardWidth = this.getChessboardWidth()
 
@@ -71,6 +72,8 @@ export default class MainContainer extends React.Component {
 
     this.forBrushes = ['blue','paleGrey', 'paleGreen', 'green']
     this.againstBrushes = ['blue','paleRed', 'paleRed', 'red']
+    // Analysis brushes - different colors for top 3 moves
+    this.analysisBrushes = ['yellow', 'paleBlue', 'paleGreen']
     window.addEventListener('resize', this.handleResize.bind(this))
     let userProfile = UserProfile.getUserProfile()
     initializeAnalytics(userProfile.userTypeDesc, this.state.settings.darkMode?"dark":"light", 
@@ -148,6 +151,34 @@ export default class MainContainer extends React.Component {
     return darkModeCookie === 'true';
   }
 
+  // Handle analysis update from Stockfish
+  onAnalysisUpdate(topMoves) {
+    const analysisArrows = topMoves.map((move, index) => ({
+      orig: move.move ? move.move.from : null,
+      dest: move.move ? move.move.to : null,
+      brush: this.analysisBrushes[index] || 'paleGrey'
+    })).filter(arrow => arrow.orig && arrow.dest);
+    
+    this.setState({ analysisArrows });
+  }
+
+  // Get combined shapes for the board (player moves + analysis arrows)
+  getCombinedShapes(playerMoves, highlightedMove) {
+    let shapes = this.autoShapes(playerMoves, highlightedMove);
+    
+    // Add analysis arrows if available
+    if (this.state.analysisArrows && this.state.analysisArrows.length > 0) {
+      const analysisShapes = this.state.analysisArrows.map(arrow => ({
+        orig: arrow.orig,
+        dest: arrow.dest,
+        brush: arrow.brush
+      }));
+      shapes = shapes.concat(analysisShapes);
+    }
+    
+    return shapes;
+  }
+
   render() {
     let lastMoveArray = this.state.lastMove ? [this.state.lastMove.from, this.state.lastMove.to] : null
     let snackBarOpen = Boolean(this.state.message)
@@ -180,7 +211,7 @@ export default class MainContainer extends React.Component {
               drawable ={{
                 enabled: true,
                 visible: true,
-                autoShapes: this.autoShapes(playerMoves, this.state.highlightedMove)
+                autoShapes: this.getCombinedShapes(playerMoves, this.state.highlightedMove)
               }}
               style={{ margin: 'auto' }}
             />
@@ -210,6 +241,7 @@ export default class MainContainer extends React.Component {
               forceFetchBookMoves={this.forceFetchBookMoves.bind(this)}
               highlightArrow={this.highlightArrow.bind(this)}
               oauthManager={this.oauth}
+              onAnalysisUpdate={this.onAnalysisUpdate.bind(this)}
             />
           </Col>
         </Row>
