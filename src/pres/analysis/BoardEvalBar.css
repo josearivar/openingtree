@@ -1,0 +1,134 @@
+/* Board Evaluation Bar - Lichess Style */
+
+.board-eval-bar {
+    width: 26px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 4px;
+}
+
+.eval-bar-track {
+    width: 14px;
+    height: 100%;
+    border-radius: 3px;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+}
+
+/* White portion - at the bottom */
+.eval-bar-white {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to right, #f0f0f0, #ffffff, #f0f0f0);
+    transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 0 0 3px 3px;
+}
+
+/* Black portion - at the top */
+.eval-bar-black {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to right, #2a2a2a, #3a3a3a, #2a2a2a);
+    transition: height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 3px 3px 0 0;
+}
+
+/* Score display */
+.eval-bar-score {
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    font-size: 10px;
+    font-weight: bold;
+    font-family: 'Roboto Mono', 'Consolas', monospace;
+    padding: 2px 4px;
+    border-radius: 3px;
+    white-space: nowrap;
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    min-width: 32px;
+    text-align: center;
+    pointer-events: none;
+}
+
+.eval-bar-score.score-white {
+    background: rgba(76, 175, 80, 0.95);
+    color: white;
+}
+
+.eval-bar-score.score-black {
+    background: rgba(33, 33, 33, 0.95);
+    color: white;
+}
+
+.eval-bar-score.score-equal {
+    background: rgba(158, 158, 158, 0.95);
+    color: white;
+}
+
+.eval-bar-score.mate {
+    background: rgba(244, 67, 54, 0.95);
+    color: white;
+    font-weight: bold;
+}
+
+/* Analyzing animation */
+.board-eval-bar.analyzing .eval-bar-track {
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
+    }
+}
+
+/* Dark mode support */
+.dark-mode .eval-bar-score {
+    background: rgba(66, 66, 66, 0.95);
+    color: #eee;
+}
+
+.dark-mode .eval-bar-score.score-white {
+    background: rgba(76, 175, 80, 0.95);
+    color: white;
+}
+
+.dark-mode .eval-bar-score.score-black {
+    background: rgba(50, 50, 50, 0.95);
+    color: #ddd;
+}
+
+.dark-mode .eval-bar-score.score-equal {
+    background: rgba(100, 100, 100, 0.95);
+    color: #ddd;
+}
+
+.dark-mode .eval-bar-white {
+    background: linear-gradient(to right, #d0d0d0, #e8e8e8, #d0d0d0);
+}
+
+.dark-mode .eval-bar-black {
+    background: linear-gradient(to right, #1a1a1a, #2a2a2a, #1a1a1a);
+}
+
+/* Responsive - hide on very small screens */
+@media (max-width: 480px) {
+    .board-eval-bar {
+        display: none;
+    }
+}

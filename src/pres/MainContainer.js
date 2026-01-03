@@ -35,6 +35,9 @@ import GlobalHeader from './GlobalHeader'
 import ControlsContainer from './ControlsContainer'
 import { addStateManagement } from './StateManagement'
 import SnackbarContentWrapper from './SnackbarContentWrapper'
+import BoardEvalBar from './analysis/BoardEvalBar'
+import './analysis/BoardEvalBar.css'
+
 export default class MainContainer extends React.Component {
 
   constructor(props){
@@ -64,7 +67,9 @@ export default class MainContainer extends React.Component {
         variant:selectedVariant,
         update:0,//increase count to force update the component
         highlightedMove:null,
-        analysisArrows:[] // Store analysis arrows from Stockfish
+        analysisArrows:[], // Store analysis arrows from Stockfish
+        currentEvaluation: null, // Store current evaluation for the eval bar
+        isAnalyzing: false // Track if analysis is active
       }
     this.chessboardWidth = this.getChessboardWidth()
 
@@ -159,7 +164,26 @@ export default class MainContainer extends React.Component {
       brush: this.analysisBrushes[index] || 'paleGrey'
     })).filter(arrow => arrow.orig && arrow.dest);
     
-    this.setState({ analysisArrows });
+    // Extract evaluation from the best move for the eval bar
+    let currentEvaluation = null;
+    if (topMoves.length > 0) {
+      const bestMove = topMoves[0];
+      // Get the current turn from FEN
+      const fenParts = this.state.fen.split(' ');
+      const turn = fenParts[1] || 'w';
+      
+      currentEvaluation = {
+        score: bestMove.score,
+        scoreType: bestMove.scoreType,
+        turn: turn
+      };
+    }
+    
+    this.setState({ 
+      analysisArrows,
+      currentEvaluation,
+      isAnalyzing: topMoves.length > 0
+    });
   }
 
   // Get combined shapes for the board (player moves + analysis arrows)
@@ -187,6 +211,9 @@ export default class MainContainer extends React.Component {
     let bookMoves = this.getBookMoves()
     this.mergePlayerAndBookMoves(playerMoves, bookMoves)
 
+    // Check if board is flipped
+    const isFlipped = this.orientation() === 'black';
+
     return <div className="rootView">
       <GlobalHeader settings={this.state.settings} 
                     settingsChange={this.settingsChange.bind(this)}
@@ -199,22 +226,30 @@ export default class MainContainer extends React.Component {
               variant = {this.state.variant} />
           </Col>
           <Col lg="6">
-            <Chessground key={this.state.resize}
-              height={this.chessboardWidth}
-              width={this.chessboardWidth}
-              orientation={this.orientation()}
-              turnColor={this.turnColor()}
-              movable={this.calcMovable()}
-              lastMove={lastMoveArray}
-              fen={this.state.fen}
-              onMove={this.onMoveAction.bind(this)}
-              drawable ={{
-                enabled: true,
-                visible: true,
-                autoShapes: this.getCombinedShapes(playerMoves, this.state.highlightedMove)
-              }}
-              style={{ margin: 'auto' }}
-            />
+            <div className="board-with-eval" style={{ display: 'flex', justifyContent: 'center' }}>
+              <BoardEvalBar 
+                height={this.chessboardWidth}
+                evaluation={this.state.currentEvaluation}
+                isAnalyzing={this.state.isAnalyzing}
+                flipped={isFlipped}
+              />
+              <Chessground key={this.state.resize}
+                height={this.chessboardWidth}
+                width={this.chessboardWidth}
+                orientation={this.orientation()}
+                turnColor={this.turnColor()}
+                movable={this.calcMovable()}
+                lastMove={lastMoveArray}
+                fen={this.state.fen}
+                onMove={this.onMoveAction.bind(this)}
+                drawable ={{
+                  enabled: true,
+                  visible: true,
+                  autoShapes: this.getCombinedShapes(playerMoves, this.state.highlightedMove)
+                }}
+                style={{ margin: 'auto' }}
+              />
+            </div>
           </Col>
           <Col lg="4" className="paddingTop">
             <ControlsContainer fen={this.state.fen}
