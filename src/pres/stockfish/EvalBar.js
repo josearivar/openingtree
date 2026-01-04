@@ -31,6 +31,7 @@ const EvalBar = ({
   // Calculate the percentage for white (score is always from White's perspective)
   // whitePercent > 50 means White is winning, < 50 means Black is winning
   const whitePercent = score ? getEvalBarPercent(score) : 50;
+  const blackPercent = 100 - whitePercent;
   
   // Format the score for display (always from White's perspective)
   const scoreText = score ? formatScore(score) : '0.0';
@@ -40,30 +41,63 @@ const EvalBar = ({
   const isBlackWinning = whitePercent < 50;
   const isEqual = whitePercent === 50;
   
-  // When board is flipped (black orientation), the bar should visually flip:
-  // - Black orientation: White portion at top, Black portion at bottom
-  // - White orientation: Black portion at top, White portion at bottom
+  // When board is flipped (black orientation), the bar should visually flip
   const isFlipped = orientation === 'black';
   
-  // Calculate visual heights
-  // When white orientation: white portion is at bottom with height = whitePercent
-  // When black orientation: white portion is at top with height = whitePercent (visually flipped)
-  const topPortionHeight = isFlipped ? whitePercent : (100 - whitePercent);
-  const bottomPortionHeight = isFlipped ? (100 - whitePercent) : whitePercent;
+  // Determine where to show the score text (on the winning side)
+  const showScoreOnWhite = isWhiteWinning || isEqual;
+  const showScoreOnBlack = isBlackWinning;
   
-  // Determine which color is on top/bottom based on orientation
-  const topColor = isFlipped ? 'white' : 'black';
-  const bottomColor = isFlipped ? 'black' : 'white';
+  // Build the bar sections - order determines visual position (first = top)
+  // When NOT flipped (white orientation): Black on top, White on bottom
+  // When flipped (black orientation): White on top, Black on bottom
+  const topSection = isFlipped ? (
+    <div 
+      className="eval-bar-section eval-bar-section-white"
+      style={{ height: `${whitePercent}%` }}
+    >
+      {showScoreOnWhite && (
+        <span className="eval-bar-score eval-bar-score-white">
+          {scoreText}
+        </span>
+      )}
+    </div>
+  ) : (
+    <div 
+      className="eval-bar-section eval-bar-section-black"
+      style={{ height: `${blackPercent}%` }}
+    >
+      {showScoreOnBlack && (
+        <span className="eval-bar-score eval-bar-score-black">
+          {scoreText}
+        </span>
+      )}
+    </div>
+  );
   
-  // Determine where to show the score text
-  // Score should appear on the winning side's portion
-  const showScoreOnTop = isFlipped 
-    ? (isWhiteWinning || isEqual)  // When flipped, white is on top
-    : isBlackWinning;              // When not flipped, black is on top
-  
-  const showScoreOnBottom = isFlipped
-    ? isBlackWinning               // When flipped, black is on bottom
-    : (isWhiteWinning || isEqual); // When not flipped, white is on bottom
+  const bottomSection = isFlipped ? (
+    <div 
+      className="eval-bar-section eval-bar-section-black"
+      style={{ height: `${blackPercent}%` }}
+    >
+      {showScoreOnBlack && (
+        <span className="eval-bar-score eval-bar-score-black">
+          {scoreText}
+        </span>
+      )}
+    </div>
+  ) : (
+    <div 
+      className="eval-bar-section eval-bar-section-white"
+      style={{ height: `${whitePercent}%` }}
+    >
+      {showScoreOnWhite && (
+        <span className="eval-bar-score eval-bar-score-white">
+          {scoreText}
+        </span>
+      )}
+    </div>
+  );
   
   return (
     <div 
@@ -71,28 +105,9 @@ const EvalBar = ({
       style={{ height: `${height}px` }}
       title={`Evaluation: ${scoreText} (depth ${depth})`}
     >
-      {/* Top portion */}
-      <div 
-        className={`eval-bar-${topColor}`}
-        style={{ height: `${topPortionHeight}%` }}
-      >
-        {showScoreOnTop && (
-          <span className={`eval-bar-score eval-bar-score-${topColor}`}>
-            {scoreText}
-          </span>
-        )}
-      </div>
-      
-      {/* Bottom portion */}
-      <div 
-        className={`eval-bar-${bottomColor}`}
-        style={{ height: `${bottomPortionHeight}%` }}
-      >
-        {showScoreOnBottom && (
-          <span className={`eval-bar-score eval-bar-score-${bottomColor}`}>
-            {scoreText}
-          </span>
-        )}
+      <div className="eval-bar-fill">
+        {topSection}
+        {bottomSection}
       </div>
       
       {/* Tick marks */}
