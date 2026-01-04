@@ -39,8 +39,10 @@ export class StockfishEngine {
       // The stockfish.js file from nmrugg/stockfish.js is designed to be used directly as a worker
       // It expects the WASM file to be in the same directory with the same name (but .wasm extension)
       // We need to pass the WASM location via URL hash
-      const wasmPath = window.location.origin + '/stockfish/stockfish.wasm';
-      const workerUrl = window.location.origin + '/stockfish/stockfish.js#' + wasmPath;
+      // Use process.env.PUBLIC_URL to handle GitHub Pages subdirectory deployment
+      const basePath = process.env.PUBLIC_URL || '';
+      const wasmPath = window.location.origin + basePath + '/stockfish/stockfish.wasm';
+      const workerUrl = window.location.origin + basePath + '/stockfish/stockfish.js#' + wasmPath;
       
       this.worker = new Worker(workerUrl);
       
