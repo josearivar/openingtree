@@ -1,7 +1,7 @@
 import React from 'react'
 import Chessground from 'react-chessground'
 import 'react-chessground/dist/styles/chessground.css'
-import { AccessContext, HttpClient, OAuth2AuthCodePKCE } from '@bity/oauth2-auth-code-pkce';
+import { OAuth2AuthCodePKCE } from '@bity/oauth2-auth-code-pkce';
 
 import {
   Button,
@@ -35,8 +35,9 @@ import GlobalHeader from './GlobalHeader'
 import ControlsContainer from './ControlsContainer'
 import { addStateManagement } from './StateManagement'
 import SnackbarContentWrapper from './SnackbarContentWrapper'
-import BoardEvalBar from './analysis/BoardEvalBar'
-import './analysis/BoardEvalBar.css'
+
+// Import Stockfish components
+import { EngineAnalysis, EvalBar, PvLines } from './stockfish'
 
 export default class MainContainer extends React.Component {
 
@@ -67,9 +68,13 @@ export default class MainContainer extends React.Component {
         variant:selectedVariant,
         update:0,//increase count to force update the component
         highlightedMove:null,
-        analysisArrows:[], // Store analysis arrows from Stockfish
-        currentEvaluation: null, // Store current evaluation for the eval bar
-        isAnalyzing: false // Track if analysis is active
+        engineHighlightedMove: null, // For engine move highlighting
+        engineEnabled: false,
+        engineEvaluation: null,
+        engineDepth: 0,
+        engineAnalyzing: false,
+        enginePvLines: [],
+        engineFen: null
       }
     this.chessboardWidth = this.getChessboardWidth()
 
@@ -77,8 +82,7 @@ export default class MainContainer extends React.Component {
 
     this.forBrushes = ['blue','paleGrey', 'paleGreen', 'green']
     this.againstBrushes = ['blue','paleRed', 'paleRed', 'red']
-    // Analysis brushes - different colors for top 3 moves
-    this.analysisBrushes = ['yellow', 'paleBlue', 'paleGreen']
+    this.engineBrush = 'yellow' // Brush for engine suggested moves
     window.addEventListener('resize', this.handleResize.bind(this))
     let userProfile = UserProfile.getUserProfile()
     initializeAnalytics(userProfile.userTypeDesc, this.state.settings.darkMode?"dark":"light", 
@@ -156,51 +160,69 @@ export default class MainContainer extends React.Component {
     return darkModeCookie === 'true';
   }
 
-  // Handle analysis update from Stockfish
-  onAnalysisUpdate(topMoves) {
-    const analysisArrows = topMoves.map((move, index) => ({
-      orig: move.move ? move.move.from : null,
-      dest: move.move ? move.move.to : null,
-      brush: this.analysisBrushes[index] || 'paleGrey'
-    })).filter(arrow => arrow.orig && arrow.dest);
-    
-    // Extract evaluation from the best move for the eval bar
-    let currentEvaluation = null;
-    if (topMoves.length > 0) {
-      const bestMove = topMoves[0];
-      // Get the current turn from FEN
-      const fenParts = this.state.fen.split(' ');
-      const turn = fenParts[1] || 'w';
-      
-      currentEvaluation = {
-        score: bestMove.score,
-        scoreType: bestMove.scoreType,
-        turn: turn
-      };
-    }
-    
-    this.setState({ 
-      analysisArrows,
-      currentEvaluation,
-      isAnalyzing: topMoves.length > 0
-    });
+  // Handle engine move highlighting
+  handleEngineHighlight = (move) => {
+    this.setState({ engineHighlightedMove: move })
   }
 
-  // Get combined shapes for the board (player moves + analysis arrows)
-  getCombinedShapes(playerMoves, highlightedMove) {
-    let shapes = this.autoShapes(playerMoves, highlightedMove);
+  // Handle engine move click - play the move
+  handleEngineMove = (move) => {
+    if (move && move.from && move.to) {
+      this.onMove(move.from, move.to)
+    }
+  }
+
+  // Handle engine state updates
+  handleEngineStateChange = (state) => {
+    this.setState({
+      engineEnabled: state.enabled,
+      engineEvaluation: state.evaluation,
+      engineDepth: state.depth,
+      engineAnalyzing: state.analyzing,
+      enginePvLines: state.pvLines || [],
+      engineFen: state.fen || this.state.fen
+    })
+  }
+
+  // Handle PV line move click
+  handlePvMoveClick = (moves) => {
+    if (moves && moves.length > 0) {
+      const move = moves[0];
+      this.onMove(move.substring(0, 2), move.substring(2, 4));
+    }
+  }
+
+  // Handle PV line move hover
+  handlePvMoveHover = (uci) => {
+    if (uci) {
+      this.setState({
+        engineHighlightedMove: {
+          from: uci.substring(0, 2),
+          to: uci.substring(2, 4)
+        }
+      });
+    } else {
+      this.setState({ engineHighlightedMove: null });
+    }
+  }
+
+  // Get auto shapes including engine highlighted move
+  getAutoShapesWithEngine(playerMoves, highlightedMove, engineHighlightedMove) {
+    let shapes = this.autoShapes(playerMoves, highlightedMove)
     
-    // Add analysis arrows if available
-    if (this.state.analysisArrows && this.state.analysisArrows.length > 0) {
-      const analysisShapes = this.state.analysisArrows.map(arrow => ({
-        orig: arrow.orig,
-        dest: arrow.dest,
-        brush: arrow.brush
-      }));
-      shapes = shapes.concat(analysisShapes);
+    // Add engine highlighted move if present
+    if (engineHighlightedMove && engineHighlightedMove.from && engineHighlightedMove.to) {
+      shapes = shapes.filter(shape => 
+        !(shape.orig === engineHighlightedMove.from && shape.dest === engineHighlightedMove.to)
+      )
+      shapes.unshift({
+        orig: engineHighlightedMove.from,
+        dest: engineHighlightedMove.to,
+        brush: this.engineBrush
+      })
     }
     
-    return shapes;
+    return shapes
   }
 
   render() {
@@ -211,8 +233,8 @@ export default class MainContainer extends React.Component {
     let bookMoves = this.getBookMoves()
     this.mergePlayerAndBookMoves(playerMoves, bookMoves)
 
-    // Check if board is flipped
-    const isFlipped = this.orientation() === 'black';
+    // Get board height as number for eval bar
+    const boardHeightNum = parseInt(this.chessboardWidth, 10) || 400
 
     return <div className="rootView">
       <GlobalHeader settings={this.state.settings} 
@@ -226,30 +248,77 @@ export default class MainContainer extends React.Component {
               variant = {this.state.variant} />
           </Col>
           <Col lg="6">
-            <div className="board-with-eval" style={{ display: 'flex', justifyContent: 'center' }}>
-              <BoardEvalBar 
-                height={this.chessboardWidth}
-                evaluation={this.state.currentEvaluation}
-                isAnalyzing={this.state.isAnalyzing}
-                flipped={isFlipped}
-              />
-              <Chessground key={this.state.resize}
-                height={this.chessboardWidth}
-                width={this.chessboardWidth}
-                orientation={this.orientation()}
-                turnColor={this.turnColor()}
-                movable={this.calcMovable()}
-                lastMove={lastMoveArray}
-                fen={this.state.fen}
-                onMove={this.onMoveAction.bind(this)}
-                drawable ={{
-                  enabled: true,
-                  visible: true,
-                  autoShapes: this.getCombinedShapes(playerMoves, this.state.highlightedMove)
-                }}
-                style={{ margin: 'auto' }}
-              />
+            {/* Engine Analysis Controls (toggle, multiPV, depth) */}
+            <EngineAnalysis
+              fen={this.state.fen}
+              orientation={this.orientation()}
+              turnColor={this.turnColor()}
+              onMove={this.handleEngineMove}
+              onHighlightMove={this.handleEngineHighlight}
+              onStateChange={this.handleEngineStateChange}
+              chess={this.chess}
+              boardHeight={boardHeightNum}
+              showPvLines={false}
+            />
+            
+            {/* Board with Eval Bar - Lichess style layout */}
+            <div className="board-eval-wrapper" style={{ 
+              display: 'flex', 
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+              gap: '4px'
+            }}>
+              {/* Evaluation Bar - positioned to the left of the board */}
+              {this.state.engineEnabled && (
+                <EvalBar
+                  score={this.state.engineEvaluation}
+                  orientation={this.orientation()}
+                  depth={this.state.engineDepth}
+                  isAnalyzing={this.state.engineAnalyzing}
+                  height={boardHeightNum}
+                />
+              )}
+              
+              {/* Chessboard */}
+              <div className="chessboard-container">
+                <Chessground key={this.state.resize}
+                  height={this.chessboardWidth}
+                  width={this.chessboardWidth}
+                  orientation={this.orientation()}
+                  turnColor={this.turnColor()}
+                  movable={this.calcMovable()}
+                  lastMove={lastMoveArray}
+                  fen={this.state.fen}
+                  onMove={this.onMoveAction.bind(this)}
+                  drawable ={{
+                    enabled: true,
+                    visible: true,
+                    autoShapes: this.getAutoShapesWithEngine(
+                      playerMoves, 
+                      this.state.highlightedMove,
+                      this.state.engineHighlightedMove
+                    )
+                  }}
+                />
+              </div>
             </div>
+            
+            {/* PV Lines - below the board */}
+            {this.state.engineEnabled && (
+              <div className="engine-pv-below-board" style={{ marginTop: '8px' }}>
+                <PvLines
+                  pvLines={this.state.enginePvLines}
+                  turnColor={this.turnColor()}
+                  depth={this.state.engineDepth}
+                  isAnalyzing={this.state.engineAnalyzing}
+                  onMoveClick={this.handlePvMoveClick}
+                  onMoveHover={this.handlePvMoveHover}
+                  fen={this.state.engineFen || this.state.fen}
+                  highlightedMove={this.state.engineHighlightedMove ? 
+                    this.state.engineHighlightedMove.from + this.state.engineHighlightedMove.to : null}
+                />
+              </div>
+            )}
           </Col>
           <Col lg="4" className="paddingTop">
             <ControlsContainer fen={this.state.fen}
@@ -276,7 +345,6 @@ export default class MainContainer extends React.Component {
               forceFetchBookMoves={this.forceFetchBookMoves.bind(this)}
               highlightArrow={this.highlightArrow.bind(this)}
               oauthManager={this.oauth}
-              onAnalysisUpdate={this.onAnalysisUpdate.bind(this)}
             />
           </Col>
         </Row>

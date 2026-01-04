@@ -1,0 +1,220 @@
+/* Engine Analysis Container Styles */
+
+.engine-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+/* Controls */
+.engine-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f5f5f5;
+  border-radius: 4px;
+}
+
+/* Toggle Switch */
+.engine-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.engine-toggle input {
+  display: none;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: #ccc;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.engine-toggle input:checked + .toggle-slider {
+  background: #4caf50;
+}
+
+.engine-toggle input:checked + .toggle-slider::after {
+  transform: translateX(16px);
+}
+
+.engine-toggle input:disabled + .toggle-slider {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toggle-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* MultiPV Select */
+.engine-multipv {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.engine-multipv:hover {
+  border-color: #bbb;
+}
+
+/* Depth Display */
+.engine-depth {
+  font-size: 11px;
+  color: #666;
+  font-family: 'Roboto Mono', monospace;
+}
+
+.dark-mode .engine-depth {
+  color: #aaa;
+}
+
+/* Go Deeper Button */
+.engine-deeper {
+  padding: 4px 12px;
+  background: #2196f3;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.engine-deeper:hover:not(:disabled) {
+  background: #1976d2;
+}
+
+.engine-deeper:disabled {
+  background: #bbb;
+  cursor: not-allowed;
+}
+
+/* Error Display */
+.engine-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #ffebee;
+  border: 1px solid #ef9a9a;
+  border-radius: 4px;
+  color: #c62828;
+  font-size: 12px;
+}
+
+.engine-error button {
+  background: none;
+  border: none;
+  color: #c62828;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.engine-error button:hover {
+  color: #b71c1c;
+}
+
+/* Main Display */
+.engine-display {
+  display: flex;
+  gap: 12px;
+}
+
+.engine-pv-container {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Dark Mode */
+.dark-mode .engine-controls {
+  background: #333;
+}
+
+.dark-mode .toggle-label {
+  color: #eee;
+}
+
+.dark-mode .toggle-slider {
+  background: #555;
+}
+
+.dark-mode .engine-toggle input:checked + .toggle-slider {
+  background: #4caf50;
+}
+
+.dark-mode .engine-multipv {
+  background: #444;
+  border-color: #555;
+  color: #eee;
+}
+
+.dark-mode .engine-multipv:hover {
+  border-color: #666;
+}
+
+.dark-mode .engine-error {
+  background: #4a1c1c;
+  border-color: #6b2c2c;
+  color: #ef9a9a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .engine-display {
+    flex-direction: column;
+  }
+  
+  .engine-display .eval-bar {
+    height: 24px !important;
+    width: 100%;
+  }
+  
+  .engine-controls {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+/* Integration with board layout */
+.engine-analysis-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.engine-analysis-wrapper .eval-bar {
+  flex-shrink: 0;
+}
+
+.engine-analysis-wrapper .board-container {
+  flex: 1;
+}

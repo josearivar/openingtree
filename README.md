@@ -1,59 +1,51 @@
-# OpeningTree with Stockfish Analysis
+# Openingtree (with Stockfish Integration)
 
-This is a fork of [OpeningTree](https://github.com/openingtree/openingtree) with integrated **Stockfish 17** chess engine analysis.
+Fork of [openingtree.com](https://www.openingtree.com) with integrated Stockfish 17.1 engine analysis.
 
-## New Features
+This project downloads chess games in form of a PGN from any source, applies specified filters and constructs an opening tree. The tree is visualized on a chessboard with win percentages and other statistics.
 
-- **Real-time Stockfish 17 Analysis** - NNUE-powered evaluation running in your browser
-- **Evaluation Bar** - Visual display of position balance
-- **Top 3 Best Moves** - See the engine's recommended moves with scores
-- **Move Arrows** - Colored arrows on the board showing suggested moves
-- **Click to Play** - Click any suggested move to play it on the board
-- **Configurable Lines** - Adjust the number of analysis lines (1-5)
+## New Features: Stockfish Integration
 
-## Screenshot
+This fork adds Lichess-style Stockfish engine analysis:
 
-The Analysis tab shows real-time engine evaluation with best moves displayed on the board.
+- **Evaluation Bar** - Vertical bar showing position assessment (like Lichess)
+- **Top Move Suggestions** - Display top 3 best moves with evaluations in algebraic notation
+- **Interactive Analysis** - Click moves to play them, hover to highlight on board
+- **Board Flip Support** - Evaluation bar correctly flips with board orientation
 
-## Original Project
+### Screenshots
 
-This project is based on [OpeningTree](https://github.com/openingtree/openingtree) - Code for [openingtree.com](https://www.openingtree.com). It downloads chess games in form of a PGN from any source, applies specified filters and constructs an opening tree. The tree is visualized on a chessboard. It also shows win percentages and other statistics with different moves.
+When engine is enabled, you'll see:
+- Evaluation bar on the left side of the board
+- Engine analysis panel below the board showing best lines
 
-### Architecture diagram
+## Architecture diagram
 This does not correlate one to one with the code modules but the interactions at a high level are depicted accurately.
 
-![Architecture Diagram](/docs/images/architecture.png)
+![GitHub Logo](/docs/images/architecture.png)
 
 ## Run locally
 ```
-yarn
-yarn start
+npm install --legacy-peer-deps
+NODE_OPTIONS=--openssl-legacy-provider npm start
 ```
-Starts a server on port `3000`
-
-Note: You may need to set `NODE_OPTIONS=--openssl-legacy-provider` for older Node.js compatibility.
+starts a server on port `3000`
 
 ## Build for production
 ```
-yarn build
+NODE_OPTIONS=--openssl-legacy-provider npm run build
 ```
 
-## Deploy to GitHub Pages
-```
-yarn deploy
-```
+## Attribution
+
+This project uses code and concepts from:
+- [OpeningTree](https://github.com/openingtree/openingtree) - GPL-3.0
+- [Lichess](https://github.com/lichess-org/lila) - AGPL-3.0 (evaluation concepts)
+- [Stockfish.js](https://github.com/nmrugg/stockfish.js) - GPL-3.0
+- [Stockfish](https://github.com/official-stockfish/Stockfish) - GPL-3.0
+
+See [ATTRIBUTION.md](ATTRIBUTION.md) for full details.
 
 ## License
 
-This project is licensed under the **GNU General Public License v3.0** (GPL-3.0), the same license as the original OpeningTree project.
-
-- Original project: [openingtree/openingtree](https://github.com/openingtree/openingtree)
-- Original authors: See [Contributors](https://github.com/openingtree/openingtree/graphs/contributors)
-
-See the [LICENSE](LICENSE) file for details.
-
-## Acknowledgments
-
-- [OpeningTree](https://github.com/openingtree/openingtree) - The original project this fork is based on
-- [Stockfish](https://stockfishchess.org/) - The powerful open-source chess engine
-- [stockfish.js](https://github.com/nicfab/stockfish.js) - WebAssembly port of Stockfish for browsers
+GPL-3.0 (same as original OpeningTree)

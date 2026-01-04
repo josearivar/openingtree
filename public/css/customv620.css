@@ -489,3 +489,90 @@ body.dark-theme input.select-search-box__search::placeholder{
 body.dark-theme span.MuiChip-label{
     color:#DDD
 }
+
+/* Stockfish Engine Analysis Styles */
+
+.board-with-eval {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+/* Yellow brush for engine moves */
+.cg-shapes svg g.yellow line {
+    stroke: #f0c000 !important;
+}
+.cg-shapes svg g.yellow circle {
+    fill: #f0c000 !important;
+}
+
+/* Dark mode support for engine analysis */
+body.dark-theme .engine-controls {
+    background: #444;
+}
+
+body.dark-theme .toggle-label {
+    color: #ddd;
+}
+
+body.dark-theme .toggle-slider {
+    background: #666;
+}
+
+body.dark-theme .engine-multipv {
+    background: #555;
+    border-color: #666;
+    color: #ddd;
+}
+
+body.dark-theme .pv-lines {
+    background: #444;
+}
+
+body.dark-theme .pv-lines-header {
+    border-bottom-color: #555;
+}
+
+body.dark-theme .pv-lines-title {
+    color: #eee;
+}
+
+body.dark-theme .pv-line {
+    background: #555;
+}
+
+body.dark-theme .pv-line:hover {
+    background: #5a5a5a;
+}
+
+body.dark-theme .pv-line-rank {
+    background: #666;
+    color: #bbb;
+}
+
+body.dark-theme .pv-move {
+    color: #ccc;
+}
+
+body.dark-theme .pv-move:hover {
+    background: #666;
+    color: #fff;
+}
+
+body.dark-theme .pv-move.best-move {
+    background: #2a4a6a;
+    color: #7cb5ec;
+}
+
+body.dark-theme .eval-bar {
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-theme .eval-bar-white {
+    background: linear-gradient(to top, #ddd, #ccc);
+}
+
+body.dark-theme .eval-bar-black {
+    background: linear-gradient(to bottom, #2a2a2a, #444);
+}
