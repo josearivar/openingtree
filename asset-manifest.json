@@ -1,21 +1,21 @@
 {
   "files": {
     "main.css": "/openingtree/static/css/main.b0fe2ece.chunk.css",
-    "main.js": "/openingtree/static/js/main.9aaf9edf.chunk.js",
-    "main.js.map": "/openingtree/static/js/main.9aaf9edf.chunk.js.map",
+    "main.js": "/openingtree/static/js/main.22163588.chunk.js",
+    "main.js.map": "/openingtree/static/js/main.22163588.chunk.js.map",
     "runtime-main.js": "/openingtree/static/js/runtime-main.4cd92b3c.js",
     "runtime-main.js.map": "/openingtree/static/js/runtime-main.4cd92b3c.js.map",
     "static/css/2.d3835f6d.chunk.css": "/openingtree/static/css/2.d3835f6d.chunk.css",
     "static/js/2.3c4951c9.chunk.js": "/openingtree/static/js/2.3c4951c9.chunk.js",
     "static/js/2.3c4951c9.chunk.js.map": "/openingtree/static/js/2.3c4951c9.chunk.js.map",
     "index.html": "/openingtree/index.html",
-    "precache-manifest.78873e02e99201b233f53fcef02723de.js": "/openingtree/precache-manifest.78873e02e99201b233f53fcef02723de.js",
+    "precache-manifest.30d610bb6bfc1fe38363e271ffbe01ca.js": "/openingtree/precache-manifest.30d610bb6bfc1fe38363e271ffbe01ca.js",
     "service-worker.js": "/openingtree/service-worker.js",
     "static/css/2.d3835f6d.chunk.css.map": "/openingtree/static/css/2.d3835f6d.chunk.css.map",
     "static/css/main.b0fe2ece.chunk.css.map": "/openingtree/static/css/main.b0fe2ece.chunk.css.map",
-    "static/js/0.a1253645.chunk.worker.js": "/openingtree/static/js/0.a1253645.chunk.worker.js",
-    "static/js/0.a1253645.chunk.worker.js.LICENSE.txt": "/openingtree/static/js/0.a1253645.chunk.worker.js.LICENSE.txt",
-    "static/js/0.a1253645.chunk.worker.js.map": "/openingtree/static/js/0.a1253645.chunk.worker.js.map",
+    "static/js/0.9b08b4de.chunk.worker.js": "/openingtree/static/js/0.9b08b4de.chunk.worker.js",
+    "static/js/0.9b08b4de.chunk.worker.js.LICENSE.txt": "/openingtree/static/js/0.9b08b4de.chunk.worker.js.LICENSE.txt",
+    "static/js/0.9b08b4de.chunk.worker.js.map": "/openingtree/static/js/0.9b08b4de.chunk.worker.js.map",
     "static/js/2.3c4951c9.chunk.js.LICENSE.txt": "/openingtree/static/js/2.3c4951c9.chunk.js.LICENSE.txt",
     "static/media/chessground.css": "/openingtree/static/media/wR.57350123.svg"
   },
@@ -24,6 +24,6 @@
     "static/css/2.d3835f6d.chunk.css",
     "static/js/2.3c4951c9.chunk.js",
     "static/css/main.b0fe2ece.chunk.css",
-    "static/js/main.9aaf9edf.chunk.js"
+    "static/js/main.22163588.chunk.js"
   ]
 }
