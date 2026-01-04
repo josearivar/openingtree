@@ -1,0 +1,265 @@
+/* Principal Variation Lines Styles - Based on Lichess Design */
+
+.pv-lines {
+  background: #f8f8f8;
+  border-radius: 4px;
+  padding: 8px;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+}
+
+.pv-lines.empty {
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pv-lines-placeholder {
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pv-lines-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #ddd;
+}
+
+.pv-lines-title {
+  font-weight: 600;
+  color: #333;
+}
+
+.pv-lines-depth {
+  font-size: 11px;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.analyzing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4caf50;
+  animation: pulse 1s infinite;
+}
+
+.analyzing-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #ddd;
+  border-top-color: #4caf50;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.pv-lines-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Individual PV Line */
+.pv-line {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  background: #fff;
+  border-radius: 3px;
+  border-left: 3px solid transparent;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.pv-line:hover {
+  background: #f0f0f0;
+}
+
+.pv-line.highlighted {
+  background: #e8f5e9;
+  border-left-color: #4caf50;
+}
+
+.pv-line.good {
+  border-left-color: #4caf50;
+}
+
+.pv-line.bad {
+  border-left-color: #f44336;
+}
+
+.pv-line-rank {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0e0e0;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.pv-line:first-child .pv-line-rank {
+  background: #4caf50;
+  color: #fff;
+}
+
+.pv-line-score {
+  min-width: 48px;
+  padding: 2px 6px;
+  background: #333;
+  color: #fff;
+  border-radius: 3px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.pv-line-score.mate {
+  background: #d32f2f;
+}
+
+.pv-line.good .pv-line-score {
+  background: #2e7d32;
+}
+
+.pv-line.bad .pv-line-score {
+  background: #c62828;
+}
+
+.pv-line-moves {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  overflow: hidden;
+}
+
+.pv-move {
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 12px;
+  color: #555;
+  transition: background 0.1s;
+}
+
+.pv-move:hover {
+  background: #ddd;
+  color: #333;
+}
+
+.pv-move.best-move {
+  background: #e3f2fd;
+  color: #1565c0;
+  font-weight: 600;
+}
+
+.pv-move.best-move:hover {
+  background: #bbdefb;
+}
+
+.pv-more {
+  color: #999;
+  font-style: italic;
+}
+
+/* Dark mode support */
+.dark-mode .pv-lines {
+  background: #2a2a2a;
+}
+
+.dark-mode .pv-lines-header {
+  border-bottom-color: #444;
+}
+
+.dark-mode .pv-lines-title {
+  color: #eee;
+}
+
+.dark-mode .pv-lines-depth {
+  color: #aaa;
+}
+
+.dark-mode .pv-lines-placeholder {
+  color: #888;
+}
+
+.dark-mode .pv-line {
+  background: #333;
+}
+
+.dark-mode .pv-line:hover {
+  background: #3a3a3a;
+}
+
+.dark-mode .pv-line.highlighted {
+  background: #1b3a1b;
+}
+
+.dark-mode .pv-line-rank {
+  background: #444;
+  color: #aaa;
+}
+
+.dark-mode .pv-line:first-child .pv-line-rank {
+  background: #4caf50;
+  color: #fff;
+}
+
+.dark-mode .pv-move {
+  color: #bbb;
+}
+
+.dark-mode .pv-move:hover {
+  background: #444;
+  color: #fff;
+}
+
+.dark-mode .pv-move.best-move {
+  background: #1a3a5c;
+  color: #64b5f6;
+}
+
+.dark-mode .pv-move.best-move:hover {
+  background: #1e4a6e;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .pv-lines {
+    font-size: 12px;
+    padding: 6px;
+  }
+  
+  .pv-line {
+    padding: 4px 6px;
+  }
+  
+  .pv-line-score {
+    min-width: 40px;
+    font-size: 11px;
+  }
+  
+  .pv-move {
+    font-size: 11px;
+  }
+}

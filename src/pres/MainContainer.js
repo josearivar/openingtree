@@ -1,7 +1,7 @@
 import React from 'react'
 import Chessground from 'react-chessground'
 import 'react-chessground/dist/styles/chessground.css'
-import { AccessContext, HttpClient, OAuth2AuthCodePKCE } from '@bity/oauth2-auth-code-pkce';
+import { OAuth2AuthCodePKCE } from '@bity/oauth2-auth-code-pkce';
 
 import {
   Button,
@@ -35,6 +35,10 @@ import GlobalHeader from './GlobalHeader'
 import ControlsContainer from './ControlsContainer'
 import { addStateManagement } from './StateManagement'
 import SnackbarContentWrapper from './SnackbarContentWrapper'
+
+// Import Stockfish components
+import { EngineAnalysis, EvalBar } from './stockfish'
+
 export default class MainContainer extends React.Component {
 
   constructor(props){
@@ -63,7 +67,12 @@ export default class MainContainer extends React.Component {
         diagnosticsDataOpen:false,
         variant:selectedVariant,
         update:0,//increase count to force update the component
-        highlightedMove:null
+        highlightedMove:null,
+        engineHighlightedMove: null, // For engine move highlighting
+        engineEnabled: false,
+        engineEvaluation: null,
+        engineDepth: 0,
+        engineAnalyzing: false
       }
     this.chessboardWidth = this.getChessboardWidth()
 
@@ -71,6 +80,7 @@ export default class MainContainer extends React.Component {
 
     this.forBrushes = ['blue','paleGrey', 'paleGreen', 'green']
     this.againstBrushes = ['blue','paleRed', 'paleRed', 'red']
+    this.engineBrush = 'yellow' // Brush for engine suggested moves
     window.addEventListener('resize', this.handleResize.bind(this))
     let userProfile = UserProfile.getUserProfile()
     initializeAnalytics(userProfile.userTypeDesc, this.state.settings.darkMode?"dark":"light", 
@@ -148,6 +158,47 @@ export default class MainContainer extends React.Component {
     return darkModeCookie === 'true';
   }
 
+  // Handle engine move highlighting
+  handleEngineHighlight = (move) => {
+    this.setState({ engineHighlightedMove: move })
+  }
+
+  // Handle engine move click - play the move
+  handleEngineMove = (move) => {
+    if (move && move.from && move.to) {
+      this.onMove(move.from, move.to)
+    }
+  }
+
+  // Handle engine state updates
+  handleEngineStateChange = (state) => {
+    this.setState({
+      engineEnabled: state.enabled,
+      engineEvaluation: state.evaluation,
+      engineDepth: state.depth,
+      engineAnalyzing: state.analyzing
+    })
+  }
+
+  // Get auto shapes including engine highlighted move
+  getAutoShapesWithEngine(playerMoves, highlightedMove, engineHighlightedMove) {
+    let shapes = this.autoShapes(playerMoves, highlightedMove)
+    
+    // Add engine highlighted move if present
+    if (engineHighlightedMove && engineHighlightedMove.from && engineHighlightedMove.to) {
+      shapes = shapes.filter(shape => 
+        !(shape.orig === engineHighlightedMove.from && shape.dest === engineHighlightedMove.to)
+      )
+      shapes.unshift({
+        orig: engineHighlightedMove.from,
+        dest: engineHighlightedMove.to,
+        brush: this.engineBrush
+      })
+    }
+    
+    return shapes
+  }
+
   render() {
     let lastMoveArray = this.state.lastMove ? [this.state.lastMove.from, this.state.lastMove.to] : null
     let snackBarOpen = Boolean(this.state.message)
@@ -155,6 +206,9 @@ export default class MainContainer extends React.Component {
     let playerMoves = this.getPlayerMoves()
     let bookMoves = this.getBookMoves()
     this.mergePlayerAndBookMoves(playerMoves, bookMoves)
+
+    // Get board height as number for eval bar
+    const boardHeightNum = parseInt(this.chessboardWidth, 10) || 400
 
     return <div className="rootView">
       <GlobalHeader settings={this.state.settings} 
@@ -168,22 +222,53 @@ export default class MainContainer extends React.Component {
               variant = {this.state.variant} />
           </Col>
           <Col lg="6">
-            <Chessground key={this.state.resize}
-              height={this.chessboardWidth}
-              width={this.chessboardWidth}
+            {/* Engine Analysis Controls and PV Lines */}
+            <EngineAnalysis
+              fen={this.state.fen}
               orientation={this.orientation()}
               turnColor={this.turnColor()}
-              movable={this.calcMovable()}
-              lastMove={lastMoveArray}
-              fen={this.state.fen}
-              onMove={this.onMoveAction.bind(this)}
-              drawable ={{
-                enabled: true,
-                visible: true,
-                autoShapes: this.autoShapes(playerMoves, this.state.highlightedMove)
-              }}
-              style={{ margin: 'auto' }}
+              onMove={this.handleEngineMove}
+              onHighlightMove={this.handleEngineHighlight}
+              onStateChange={this.handleEngineStateChange}
+              chess={this.chess}
+              boardHeight={boardHeightNum}
             />
+            
+            {/* Board with Eval Bar wrapper */}
+            <div className="board-with-eval" style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+              {/* Evaluation Bar - positioned to the left of the board */}
+              {this.state.engineEnabled && (
+                <EvalBar
+                  score={this.state.engineEvaluation}
+                  orientation={this.orientation()}
+                  depth={this.state.engineDepth}
+                  isAnalyzing={this.state.engineAnalyzing}
+                  height={boardHeightNum}
+                />
+              )}
+              
+              {/* Chessboard */}
+              <Chessground key={this.state.resize}
+                height={this.chessboardWidth}
+                width={this.chessboardWidth}
+                orientation={this.orientation()}
+                turnColor={this.turnColor()}
+                movable={this.calcMovable()}
+                lastMove={lastMoveArray}
+                fen={this.state.fen}
+                onMove={this.onMoveAction.bind(this)}
+                drawable ={{
+                  enabled: true,
+                  visible: true,
+                  autoShapes: this.getAutoShapesWithEngine(
+                    playerMoves, 
+                    this.state.highlightedMove,
+                    this.state.engineHighlightedMove
+                  )
+                }}
+                style={{ margin: 'auto' }}
+              />
+            </div>
           </Col>
           <Col lg="4" className="paddingTop">
             <ControlsContainer fen={this.state.fen}

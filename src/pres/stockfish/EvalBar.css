@@ -1,0 +1,184 @@
+/* Evaluation Bar Styles - Based on Lichess Design */
+
+.eval-bar {
+  position: relative;
+  width: 26px;
+  min-width: 26px;
+  border-radius: 3px;
+  overflow: hidden;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  background: #333;
+  transition: opacity 0.2s;
+}
+
+.eval-bar-black {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to bottom, #403d39, #555);
+  transition: height 0.3s ease-out;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 2px;
+}
+
+.eval-bar-white {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, #f0f0f0, #e0e0e0);
+  transition: height 0.3s ease-out;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 2px;
+}
+
+.eval-bar-score {
+  font-size: 10px;
+  font-weight: bold;
+  font-family: 'Roboto Mono', monospace;
+  text-align: center;
+  line-height: 1;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.eval-bar-score-white {
+  color: #333;
+}
+
+.eval-bar-score-black {
+  color: #fff;
+}
+
+/* Tick marks */
+.eval-bar-ticks {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.eval-bar-tick {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: rgba(128, 128, 128, 0.3);
+}
+
+.eval-bar-tick-major {
+  background: rgba(128, 128, 128, 0.5);
+}
+
+.eval-bar-tick-zero {
+  height: 2px;
+  background: rgba(128, 128, 128, 0.8);
+}
+
+/* Analyzing animation */
+.eval-bar.analyzing .eval-bar-black,
+.eval-bar.analyzing .eval-bar-white {
+  transition: height 0.1s ease-out;
+}
+
+.eval-bar-analyzing {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+}
+
+.eval-bar-analyzing-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4caf50;
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.4;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Dark mode support */
+.dark-mode .eval-bar {
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+}
+
+.dark-mode .eval-bar-white {
+  background: linear-gradient(to top, #ddd, #ccc);
+}
+
+.dark-mode .eval-bar-black {
+  background: linear-gradient(to bottom, #2a2a2a, #444);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .eval-bar {
+    width: 20px;
+    min-width: 20px;
+  }
+  
+  .eval-bar-score {
+    font-size: 8px;
+  }
+}
+
+/* Horizontal variant for mobile */
+.eval-bar.horizontal {
+  width: 100%;
+  height: 20px !important;
+  min-width: unset;
+}
+
+.eval-bar.horizontal .eval-bar-black {
+  top: 0;
+  bottom: 0;
+  left: auto;
+  right: 0;
+  height: 100% !important;
+  transition: width 0.3s ease-out;
+}
+
+.eval-bar.horizontal .eval-bar-white {
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: auto;
+  height: 100% !important;
+  transition: width 0.3s ease-out;
+}
+
+.eval-bar.horizontal .eval-bar-ticks {
+  display: none;
+}
+
+.eval-bar.horizontal .eval-bar-score {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.eval-bar.horizontal .eval-bar-score-white {
+  left: 4px;
+}
+
+.eval-bar.horizontal .eval-bar-score-black {
+  right: 4px;
+}
