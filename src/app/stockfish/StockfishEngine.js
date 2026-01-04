@@ -18,6 +18,7 @@ export class StockfishEngine {
     this.multiPv = options.multiPv || 3;
     this.depth = options.depth || 20;
     this.currentFen = null;
+    this.isWhiteTurn = true; // Track whose turn it is
     
     // PV lines storage
     this.pvLines = [];
@@ -78,6 +79,26 @@ export class StockfishEngine {
     }
   }
 
+  /**
+   * Normalize score to always be from White's perspective
+   * Stockfish reports scores from the side to move's perspective
+   * @param {Object} score - Score object with cp or mate property
+   * @returns {Object} Normalized score from White's perspective
+   */
+  normalizeScore(score) {
+    if (this.isWhiteTurn) {
+      // White to move - score is already from White's perspective
+      return score;
+    } else {
+      // Black to move - negate the score to get White's perspective
+      if (score.mate !== undefined) {
+        return { mate: -score.mate };
+      } else {
+        return { cp: -(score.cp || 0) };
+      }
+    }
+  }
+
   parseInfo(line) {
     // Parse UCI info line
     const parts = line.split(' ');
@@ -126,11 +147,17 @@ export class StockfishEngine {
     
     // Only process if we have meaningful data
     if (depth > 0 && pv.length > 0) {
+      // Create raw score object
+      const rawScore = scoreType === 'mate' ? { mate: score } : { cp: score };
+      
+      // Normalize score to White's perspective
+      const normalizedScore = this.normalizeScore(rawScore);
+      
       const evalData = {
         depth,
         seldepth,
         multiPv,
-        score: scoreType === 'mate' ? { mate: score } : { cp: score },
+        score: normalizedScore,
         pv,
         nodes,
         nps,
@@ -175,6 +202,16 @@ export class StockfishEngine {
   }
 
   /**
+   * Determine whose turn it is from a FEN string
+   * @param {string} fen - FEN string
+   * @returns {boolean} True if it's White's turn
+   */
+  isWhiteToMove(fen) {
+    const parts = fen.split(' ');
+    return parts.length < 2 || parts[1] === 'w';
+  }
+
+  /**
    * Start analysis of a position
    * @param {string} fen - FEN string of the position
    * @param {Object} options - Analysis options
@@ -191,6 +228,7 @@ export class StockfishEngine {
     }
     
     this.currentFen = fen;
+    this.isWhiteTurn = this.isWhiteToMove(fen);
     this.pvLines = [];
     
     // Update MultiPV if changed

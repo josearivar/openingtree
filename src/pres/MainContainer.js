@@ -222,7 +222,7 @@ export default class MainContainer extends React.Component {
               variant = {this.state.variant} />
           </Col>
           <Col lg="6">
-            {/* Engine Analysis Controls and PV Lines */}
+            {/* Engine Analysis Controls (toggle, multiPV, depth) */}
             <EngineAnalysis
               fen={this.state.fen}
               orientation={this.orientation()}
@@ -234,8 +234,13 @@ export default class MainContainer extends React.Component {
               boardHeight={boardHeightNum}
             />
             
-            {/* Board with Eval Bar wrapper */}
-            <div className="board-with-eval" style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+            {/* Board with Eval Bar - Lichess style layout */}
+            <div className="board-eval-wrapper" style={{ 
+              display: 'flex', 
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+              gap: '4px'
+            }}>
               {/* Evaluation Bar - positioned to the left of the board */}
               {this.state.engineEnabled && (
                 <EvalBar
@@ -248,26 +253,27 @@ export default class MainContainer extends React.Component {
               )}
               
               {/* Chessboard */}
-              <Chessground key={this.state.resize}
-                height={this.chessboardWidth}
-                width={this.chessboardWidth}
-                orientation={this.orientation()}
-                turnColor={this.turnColor()}
-                movable={this.calcMovable()}
-                lastMove={lastMoveArray}
-                fen={this.state.fen}
-                onMove={this.onMoveAction.bind(this)}
-                drawable ={{
-                  enabled: true,
-                  visible: true,
-                  autoShapes: this.getAutoShapesWithEngine(
-                    playerMoves, 
-                    this.state.highlightedMove,
-                    this.state.engineHighlightedMove
-                  )
-                }}
-                style={{ margin: 'auto' }}
-              />
+              <div className="chessboard-container">
+                <Chessground key={this.state.resize}
+                  height={this.chessboardWidth}
+                  width={this.chessboardWidth}
+                  orientation={this.orientation()}
+                  turnColor={this.turnColor()}
+                  movable={this.calcMovable()}
+                  lastMove={lastMoveArray}
+                  fen={this.state.fen}
+                  onMove={this.onMoveAction.bind(this)}
+                  drawable ={{
+                    enabled: true,
+                    visible: true,
+                    autoShapes: this.getAutoShapesWithEngine(
+                      playerMoves, 
+                      this.state.highlightedMove,
+                      this.state.engineHighlightedMove
+                    )
+                  }}
+                />
+              </div>
             </div>
           </Col>
           <Col lg="4" className="paddingTop">

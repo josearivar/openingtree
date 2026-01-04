@@ -2,13 +2,15 @@
 
 .eval-bar {
   position: relative;
-  width: 26px;
-  min-width: 26px;
-  border-radius: 3px;
+  width: 28px;
+  min-width: 28px;
+  border-radius: 4px;
   overflow: hidden;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.4), inset 0 0 2px rgba(0, 0, 0, 0.2);
   background: #333;
   transition: opacity 0.2s;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.3);
 }
 
 .eval-bar-black {
@@ -16,12 +18,12 @@
   top: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to bottom, #403d39, #555);
+  background: linear-gradient(to bottom, #2d2d2d, #3d3d3d);
   transition: height 0.3s ease-out;
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding-bottom: 2px;
+  padding-bottom: 4px;
 }
 
 .eval-bar-white {
@@ -29,26 +31,27 @@
   bottom: 0;
   left: 0;
   right: 0;
-  background: linear-gradient(to top, #f0f0f0, #e0e0e0);
+  background: linear-gradient(to top, #f5f5f5, #e8e8e8);
   transition: height 0.3s ease-out;
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 2px;
+  padding-top: 4px;
 }
 
 .eval-bar-score {
-  font-size: 10px;
+  font-size: 11px;
   font-weight: bold;
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'Roboto Mono', 'Consolas', monospace;
   text-align: center;
   line-height: 1;
   white-space: nowrap;
   z-index: 2;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
 }
 
 .eval-bar-score-white {
-  color: #333;
+  color: #222;
 }
 
 .eval-bar-score-black {
@@ -70,16 +73,16 @@
   left: 0;
   right: 0;
   height: 1px;
-  background: rgba(128, 128, 128, 0.3);
+  background: rgba(128, 128, 128, 0.25);
 }
 
 .eval-bar-tick-major {
-  background: rgba(128, 128, 128, 0.5);
+  background: rgba(128, 128, 128, 0.4);
 }
 
 .eval-bar-tick-zero {
   height: 2px;
-  background: rgba(128, 128, 128, 0.8);
+  background: rgba(255, 100, 100, 0.6);
 }
 
 /* Analyzing animation */
@@ -117,33 +120,34 @@
 
 /* Dark mode support */
 .dark-mode .eval-bar {
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6), inset 0 0 2px rgba(0, 0, 0, 0.3);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 
 .dark-mode .eval-bar-white {
-  background: linear-gradient(to top, #ddd, #ccc);
+  background: linear-gradient(to top, #e0e0e0, #d0d0d0);
 }
 
 .dark-mode .eval-bar-black {
-  background: linear-gradient(to bottom, #2a2a2a, #444);
+  background: linear-gradient(to bottom, #1a1a1a, #2a2a2a);
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .eval-bar {
-    width: 20px;
-    min-width: 20px;
+    width: 22px;
+    min-width: 22px;
   }
   
   .eval-bar-score {
-    font-size: 8px;
+    font-size: 9px;
   }
 }
 
 /* Horizontal variant for mobile */
 .eval-bar.horizontal {
   width: 100%;
-  height: 20px !important;
+  height: 22px !important;
   min-width: unset;
 }
 
