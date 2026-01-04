@@ -4,8 +4,112 @@ import PvLines from './PvLines';
 import './EngineAnalysis.css';
 
 /**
+ * EngineControls Component - Just the toggle and controls
+ */
+export const EngineControls = ({
+  enabled,
+  isReady,
+  multiPv,
+  depth,
+  isAnalyzing,
+  targetDepth,
+  onToggle,
+  onMultiPvChange,
+  onGoDeeper,
+  error,
+  onDismissError
+}) => {
+  return (
+    <div className="engine-controls">
+      <label className="engine-toggle">
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={onToggle}
+          disabled={!isReady}
+        />
+        <span className="toggle-slider" />
+        <span className="toggle-label">
+          {isReady ? 'Engine' : 'Loading...'}
+        </span>
+      </label>
+      
+      {enabled && isReady && (
+        <>
+          <select
+            className="engine-multipv"
+            value={multiPv}
+            onChange={(e) => onMultiPvChange(parseInt(e.target.value, 10))}
+            title="Number of lines to show"
+          >
+            <option value={1}>1 line</option>
+            <option value={2}>2 lines</option>
+            <option value={3}>3 lines</option>
+            <option value={5}>5 lines</option>
+          </select>
+          
+          <button
+            className="engine-deeper"
+            onClick={onGoDeeper}
+            disabled={isAnalyzing || targetDepth >= 40}
+            title="Analyze deeper"
+          >
+            Go deeper
+          </button>
+          
+          <span className="engine-depth">
+            Depth: {depth}
+          </span>
+        </>
+      )}
+      
+      {/* Error display */}
+      {error && (
+        <div className="engine-error">
+          <span>Engine error: {error}</span>
+          <button onClick={onDismissError}>×</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/**
+ * EnginePvDisplay Component - Just the PV lines display
+ */
+export const EnginePvDisplay = ({
+  enabled,
+  pvLines,
+  turnColor,
+  depth,
+  isAnalyzing,
+  onMoveClick,
+  onMoveHover,
+  fen,
+  highlightedMove
+}) => {
+  if (!enabled) return null;
+  
+  return (
+    <div className="engine-pv-display">
+      <PvLines
+        pvLines={pvLines}
+        turnColor={turnColor}
+        depth={depth}
+        isAnalyzing={isAnalyzing}
+        onMoveClick={onMoveClick}
+        onMoveHover={onMoveHover}
+        fen={fen}
+        highlightedMove={highlightedMove}
+      />
+    </div>
+  );
+};
+
+/**
  * EngineAnalysis Component
  * Main component that integrates Stockfish engine with evaluation display
+ * Now provides separate components for controls and PV display
  * 
  * @param {Object} props
  * @param {string} props.fen - Current position FEN
@@ -16,6 +120,7 @@ import './EngineAnalysis.css';
  * @param {Function} props.onStateChange - Callback for engine state changes (enabled, evaluation, depth, analyzing)
  * @param {Object} props.chess - chess.js instance for move conversion
  * @param {number} props.boardHeight - Height of the chessboard for eval bar sizing
+ * @param {boolean} props.showPvLines - Whether to show PV lines in this component (default: false, for separate display)
  */
 const EngineAnalysis = ({
   fen,
@@ -25,7 +130,8 @@ const EngineAnalysis = ({
   onHighlightMove,
   onStateChange,
   chess,
-  boardHeight = 400
+  boardHeight = 400,
+  showPvLines = false
 }) => {
   const [engine, setEngine] = useState(null);
   const [isReady, setIsReady] = useState(false);
@@ -41,17 +147,24 @@ const EngineAnalysis = ({
   
   const lastFenRef = useRef(null);
   
-  // Notify parent of state changes
+  // Notify parent of state changes including pvLines and fen
   useEffect(() => {
     if (onStateChange) {
       onStateChange({
         enabled,
         evaluation,
         depth,
-        analyzing: isAnalyzing
+        analyzing: isAnalyzing,
+        pvLines,
+        fen: lastFenRef.current || fen,
+        multiPv,
+        targetDepth,
+        isReady,
+        error,
+        highlightedMove
       });
     }
-  }, [enabled, evaluation, depth, isAnalyzing, onStateChange]);
+  }, [enabled, evaluation, depth, isAnalyzing, pvLines, fen, multiPv, targetDepth, isReady, error, highlightedMove, onStateChange]);
   
   // Initialize engine
   useEffect(() => {
@@ -171,60 +284,22 @@ const EngineAnalysis = ({
   return (
     <div className="engine-analysis">
       {/* Controls */}
-      <div className="engine-controls">
-        <label className="engine-toggle">
-          <input
-            type="checkbox"
-            checked={enabled}
-            onChange={toggleAnalysis}
-            disabled={!isReady}
-          />
-          <span className="toggle-slider" />
-          <span className="toggle-label">
-            {isReady ? 'Engine' : 'Loading...'}
-          </span>
-        </label>
-        
-        {enabled && isReady && (
-          <>
-            <select
-              className="engine-multipv"
-              value={multiPv}
-              onChange={(e) => setMultiPv(parseInt(e.target.value, 10))}
-              title="Number of lines to show"
-            >
-              <option value={1}>1 line</option>
-              <option value={2}>2 lines</option>
-              <option value={3}>3 lines</option>
-              <option value={5}>5 lines</option>
-            </select>
-            
-            <button
-              className="engine-deeper"
-              onClick={goDeeper}
-              disabled={isAnalyzing || targetDepth >= 40}
-              title="Analyze deeper"
-            >
-              Go deeper
-            </button>
-            
-            <span className="engine-depth">
-              Depth: {depth}
-            </span>
-          </>
-        )}
-      </div>
+      <EngineControls
+        enabled={enabled}
+        isReady={isReady}
+        multiPv={multiPv}
+        depth={depth}
+        isAnalyzing={isAnalyzing}
+        targetDepth={targetDepth}
+        onToggle={toggleAnalysis}
+        onMultiPvChange={setMultiPv}
+        onGoDeeper={goDeeper}
+        error={error}
+        onDismissError={() => setError(null)}
+      />
       
-      {/* Error display */}
-      {error && (
-        <div className="engine-error">
-          <span>Engine error: {error}</span>
-          <button onClick={() => setError(null)}>×</button>
-        </div>
-      )}
-      
-      {/* PV Lines display */}
-      {enabled && (
+      {/* PV Lines display - only if showPvLines is true */}
+      {showPvLines && enabled && (
         <div className="engine-display">
           <div className="engine-pv-container">
             <PvLines
@@ -234,7 +309,7 @@ const EngineAnalysis = ({
               isAnalyzing={isAnalyzing}
               onMoveClick={handleMoveClick}
               onMoveHover={handleMoveHover}
-              chess={chess}
+              fen={fen}
               highlightedMove={highlightedMove}
             />
           </div>

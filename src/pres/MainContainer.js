@@ -37,7 +37,7 @@ import { addStateManagement } from './StateManagement'
 import SnackbarContentWrapper from './SnackbarContentWrapper'
 
 // Import Stockfish components
-import { EngineAnalysis, EvalBar } from './stockfish'
+import { EngineAnalysis, EvalBar, PvLines } from './stockfish'
 
 export default class MainContainer extends React.Component {
 
@@ -72,7 +72,9 @@ export default class MainContainer extends React.Component {
         engineEnabled: false,
         engineEvaluation: null,
         engineDepth: 0,
-        engineAnalyzing: false
+        engineAnalyzing: false,
+        enginePvLines: [],
+        engineFen: null
       }
     this.chessboardWidth = this.getChessboardWidth()
 
@@ -176,8 +178,32 @@ export default class MainContainer extends React.Component {
       engineEnabled: state.enabled,
       engineEvaluation: state.evaluation,
       engineDepth: state.depth,
-      engineAnalyzing: state.analyzing
+      engineAnalyzing: state.analyzing,
+      enginePvLines: state.pvLines || [],
+      engineFen: state.fen || this.state.fen
     })
+  }
+
+  // Handle PV line move click
+  handlePvMoveClick = (moves) => {
+    if (moves && moves.length > 0) {
+      const move = moves[0];
+      this.onMove(move.substring(0, 2), move.substring(2, 4));
+    }
+  }
+
+  // Handle PV line move hover
+  handlePvMoveHover = (uci) => {
+    if (uci) {
+      this.setState({
+        engineHighlightedMove: {
+          from: uci.substring(0, 2),
+          to: uci.substring(2, 4)
+        }
+      });
+    } else {
+      this.setState({ engineHighlightedMove: null });
+    }
   }
 
   // Get auto shapes including engine highlighted move
@@ -232,6 +258,7 @@ export default class MainContainer extends React.Component {
               onStateChange={this.handleEngineStateChange}
               chess={this.chess}
               boardHeight={boardHeightNum}
+              showPvLines={false}
             />
             
             {/* Board with Eval Bar - Lichess style layout */}
@@ -275,6 +302,23 @@ export default class MainContainer extends React.Component {
                 />
               </div>
             </div>
+            
+            {/* PV Lines - below the board */}
+            {this.state.engineEnabled && (
+              <div className="engine-pv-below-board" style={{ marginTop: '8px' }}>
+                <PvLines
+                  pvLines={this.state.enginePvLines}
+                  turnColor={this.turnColor()}
+                  depth={this.state.engineDepth}
+                  isAnalyzing={this.state.engineAnalyzing}
+                  onMoveClick={this.handlePvMoveClick}
+                  onMoveHover={this.handlePvMoveHover}
+                  fen={this.state.engineFen || this.state.fen}
+                  highlightedMove={this.state.engineHighlightedMove ? 
+                    this.state.engineHighlightedMove.from + this.state.engineHighlightedMove.to : null}
+                />
+              </div>
+            )}
           </Col>
           <Col lg="4" className="paddingTop">
             <ControlsContainer fen={this.state.fen}

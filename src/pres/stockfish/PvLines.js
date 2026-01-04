@@ -11,11 +11,12 @@ import './PvLines.css';
  */
 const convertPvToSan = (uciMoves, fen) => {
   if (!uciMoves || uciMoves.length === 0) {
-    return uciMoves || [];
+    return [];
   }
   
+  // If no FEN provided, return UCI moves as-is
   if (!fen) {
-    return uciMoves;
+    return uciMoves.map(uci => uci || '');
   }
   
   const sanMoves = [];
@@ -24,38 +25,44 @@ const convertPvToSan = (uciMoves, fen) => {
     // Create a new chess instance with the current position
     const tempChess = new Chess(fen);
     
-    for (const uci of uciMoves) {
+    for (let i = 0; i < uciMoves.length; i++) {
+      const uci = uciMoves[i];
+      
       if (!uci || uci.length < 4) {
-        sanMoves.push(uci);
-        continue;
+        // Invalid move, stop here
+        break;
       }
       
       try {
+        const from = uci.substring(0, 2);
+        const to = uci.substring(2, 4);
+        const promotion = uci.length > 4 ? uci[4] : undefined;
+        
         const move = tempChess.move({
-          from: uci.substring(0, 2),
-          to: uci.substring(2, 4),
-          promotion: uci.length > 4 ? uci[4] : undefined
+          from: from,
+          to: to,
+          promotion: promotion
         });
         
         if (move) {
           sanMoves.push(move.san);
         } else {
-          // If move fails, fall back to UCI
-          sanMoves.push(uci);
-          break; // Stop converting as position is now invalid
+          // Move failed, stop converting
+          console.warn(`Failed to convert move ${uci} at position ${tempChess.fen()}`);
+          break;
         }
       } catch (e) {
-        // If conversion fails, use UCI notation
-        sanMoves.push(uci);
+        // If conversion fails, stop here
+        console.warn(`Error converting move ${uci}:`, e.message);
         break;
       }
     }
     
     return sanMoves;
   } catch (e) {
-    // If anything fails, return original UCI moves
-    console.warn('Error converting PV to SAN:', e);
-    return uciMoves;
+    // If chess.js fails to initialize, return empty array
+    console.warn('Error initializing chess.js:', e.message);
+    return [];
   }
 };
 
@@ -79,11 +86,21 @@ const PvLine = ({
   const isGood = chances > 0.1;
   const isBad = chances < -0.1;
   
-  // Convert UCI moves to SAN notation
+  // Convert UCI moves to SAN notation - use the FEN from pvData if available, otherwise use prop
+  const effectiveFen = pvData.fen || fen;
+  
   const displayMoves = useMemo(() => {
-    const uciMoves = pv.slice(0, 10);
-    return convertPvToSan(uciMoves, fen);
-  }, [pv, fen]);
+    const uciMoves = pv.slice(0, 12);
+    const sanMoves = convertPvToSan(uciMoves, effectiveFen);
+    
+    // If conversion failed or returned fewer moves, pad with UCI notation
+    if (sanMoves.length < uciMoves.length) {
+      // Return what we have - don't mix SAN and UCI
+      return sanMoves.length > 0 ? sanMoves : uciMoves;
+    }
+    
+    return sanMoves;
+  }, [pv, effectiveFen]);
   
   return (
     <div 
@@ -111,7 +128,7 @@ const PvLine = ({
             {move}
           </span>
         ))}
-        {pv.length > 10 && <span className="pv-more">...</span>}
+        {pv.length > 12 && <span className="pv-more">...</span>}
       </div>
     </div>
   );
@@ -128,7 +145,7 @@ const PvLine = ({
  * @param {boolean} props.isAnalyzing - Whether engine is analyzing
  * @param {Function} props.onMoveClick - Callback when a move is clicked
  * @param {Function} props.onMoveHover - Callback when hovering over a move
- * @param {Object} props.chess - chess.js instance (used to get current FEN)
+ * @param {string} props.fen - Current FEN position for move conversion
  */
 const PvLines = ({ 
   pvLines = [], 
@@ -137,17 +154,9 @@ const PvLines = ({
   isAnalyzing = false,
   onMoveClick,
   onMoveHover,
-  chess,
+  fen,
   highlightedMove
 }) => {
-  // Get current FEN from chess instance
-  const currentFen = useMemo(() => {
-    if (chess && typeof chess.fen === 'function') {
-      return chess.fen();
-    }
-    return null;
-  }, [chess]);
-  
   if (!pvLines || pvLines.length === 0) {
     return (
       <div className="pv-lines empty">
@@ -183,7 +192,7 @@ const PvLines = ({
             turnColor={turnColor}
             onMoveClick={onMoveClick}
             onMoveHover={onMoveHover}
-            fen={currentFen || pvData.fen}
+            fen={fen}
             isHighlighted={highlightedMove === pvData.pv[0]}
           />
         ))}
