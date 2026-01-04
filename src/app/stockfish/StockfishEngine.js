@@ -26,6 +26,11 @@ export class StockfishEngine {
     // UCI initialization state
     this.uciOk = false;
     
+    // Error recovery
+    this.restartCount = 0;
+    this.maxRestarts = 3;
+    this.lastError = null;
+    
     this.init();
   }
 
@@ -45,7 +50,7 @@ export class StockfishEngine {
       
       this.worker.onerror = (e) => {
         console.error('Stockfish worker error:', e);
-        this.onError(e.message || 'Worker error');
+        this.handleWorkerError(e.message || 'Worker error');
       };
       
       // Send UCI command to initialize
@@ -55,12 +60,65 @@ export class StockfishEngine {
       
     } catch (err) {
       console.error('Failed to create Stockfish worker:', err);
-      this.onError(err.message);
+      this.handleWorkerError(err.message);
+    }
+  }
+
+  /**
+   * Handle worker errors with automatic restart capability
+   */
+  handleWorkerError(errorMessage) {
+    this.lastError = errorMessage;
+    this.isSearching = false;
+    
+    // Check if this is a recoverable error (like index out of bounds)
+    const isRecoverable = 
+      errorMessage.includes('index out of bounds') ||
+      errorMessage.includes('RuntimeError') ||
+      errorMessage.includes('memory');
+    
+    if (isRecoverable && this.restartCount < this.maxRestarts) {
+      console.log(`Stockfish error (attempt ${this.restartCount + 1}/${this.maxRestarts}), restarting...`);
+      this.restartCount++;
+      
+      // Destroy current worker
+      if (this.worker) {
+        try {
+          this.worker.terminate();
+        } catch (e) {
+          // Ignore termination errors
+        }
+        this.worker = null;
+      }
+      
+      // Reset state
+      this.isReady = false;
+      this.uciOk = false;
+      
+      // Restart after a short delay
+      setTimeout(() => {
+        this.init();
+        
+        // Re-analyze current position after restart
+        if (this.currentFen && this.isReady) {
+          setTimeout(() => {
+            this.analyze(this.currentFen, { depth: this.depth, multiPv: this.multiPv });
+          }, 500);
+        }
+      }, 1000);
+    } else {
+      // Non-recoverable error or max restarts reached
+      this.onError(errorMessage);
     }
   }
 
   handleMessage(line) {
     if (typeof line !== 'string') return;
+    
+    // Reset restart count on successful communication
+    if (this.restartCount > 0 && (line === 'readyok' || line.startsWith('info '))) {
+      this.restartCount = 0;
+    }
     
     // Parse UCI responses
     if (line === 'uciok') {
@@ -68,14 +126,26 @@ export class StockfishEngine {
       // Set options
       this.send('setoption name MultiPV value ' + this.multiPv);
       this.send('setoption name UCI_AnalyseMode value true');
+      // Use smaller hash for stability
+      this.send('setoption name Hash value 16');
       this.send('isready');
     } else if (line === 'readyok') {
       this.isReady = true;
       this.onReady();
     } else if (line.startsWith('info ')) {
-      this.parseInfo(line);
+      try {
+        this.parseInfo(line);
+      } catch (e) {
+        console.warn('Error parsing info line:', e);
+        // Don't propagate parsing errors
+      }
     } else if (line.startsWith('bestmove ')) {
-      this.parseBestMove(line);
+      try {
+        this.parseBestMove(line);
+      } catch (e) {
+        console.warn('Error parsing bestmove:', e);
+        this.isSearching = false;
+      }
     }
   }
 
@@ -115,29 +185,29 @@ export class StockfishEngine {
     for (let i = 1; i < parts.length; i++) {
       switch (parts[i]) {
         case 'depth':
-          depth = parseInt(parts[++i], 10);
+          depth = parseInt(parts[++i], 10) || 0;
           break;
         case 'seldepth':
-          seldepth = parseInt(parts[++i], 10);
+          seldepth = parseInt(parts[++i], 10) || 0;
           break;
         case 'multipv':
-          multiPv = parseInt(parts[++i], 10);
+          multiPv = parseInt(parts[++i], 10) || 1;
           break;
         case 'score':
           scoreType = parts[++i];
-          score = parseInt(parts[++i], 10);
+          score = parseInt(parts[++i], 10) || 0;
           break;
         case 'nodes':
-          nodes = parseInt(parts[++i], 10);
+          nodes = parseInt(parts[++i], 10) || 0;
           break;
         case 'nps':
-          nps = parseInt(parts[++i], 10);
+          nps = parseInt(parts[++i], 10) || 0;
           break;
         case 'time':
-          time = parseInt(parts[++i], 10);
+          time = parseInt(parts[++i], 10) || 0;
           break;
         case 'pv':
-          pv = parts.slice(i + 1);
+          pv = parts.slice(i + 1).filter(m => m && m.length >= 4);
           i = parts.length;
           break;
         default:
@@ -165,7 +235,10 @@ export class StockfishEngine {
         fen: this.currentFen
       };
       
-      // Store PV line
+      // Store PV line (ensure array is large enough)
+      while (this.pvLines.length < multiPv) {
+        this.pvLines.push(null);
+      }
       this.pvLines[multiPv - 1] = evalData;
       
       // Emit evaluation update
@@ -197,7 +270,12 @@ export class StockfishEngine {
 
   send(cmd) {
     if (this.worker) {
-      this.worker.postMessage(cmd);
+      try {
+        this.worker.postMessage(cmd);
+      } catch (e) {
+        console.warn('Error sending command to Stockfish:', e);
+        this.handleWorkerError(e.message);
+      }
     }
   }
 
@@ -237,6 +315,12 @@ export class StockfishEngine {
       this.multiPv = multiPv;
       this.send('setoption name MultiPV value ' + this.multiPv);
     }
+    
+    // Clear hash to prevent memory issues
+    this.send('ucinewgame');
+    
+    // Wait for ready before setting position
+    this.send('isready');
     
     // Set position
     this.send('position fen ' + fen);
@@ -282,7 +366,11 @@ export class StockfishEngine {
     this.stop();
     if (this.worker) {
       this.send('quit');
-      this.worker.terminate();
+      try {
+        this.worker.terminate();
+      } catch (e) {
+        // Ignore termination errors
+      }
       this.worker = null;
     }
     this.isReady = false;
